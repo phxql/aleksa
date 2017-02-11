@@ -1,0 +1,40 @@
+group 'de.mkammerer.alexa.samples.helloworld'
+version '1.0-SNAPSHOT'
+
+// Enable Kotlin compilation
+buildscript {
+    ext.kotlin_version = '1.0.6'
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+// Add the application plugin to create a tar/zip which contains a launcher
+apply plugin: 'application'
+apply plugin: 'kotlin'
+
+// Set the main class name for the application plugin
+mainClassName = 'de.mkammerer.alexa.samples.helloworld.MainKt'
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+    // Add Aleksa and a logging backend (logging is done with SLF4J API)
+    compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.0-SNAPSHOT'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.9'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.3'
+}
