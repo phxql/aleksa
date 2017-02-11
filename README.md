@@ -1,5 +1,5 @@
 # Aleksa
-Aleksa is a small framework for writing Alexa Skills in Kotlin.
+Aleksa is a small framework for writing [Alexa Skills](https://developer.amazon.com/alexa-skills-kit) in Kotlin.
 
 ## Usage
 
@@ -25,6 +25,7 @@ compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.0'
 * Configurable via code or commandline flags
 * Supports hosting multiple skills in one application
 * Convenience functions for plaintext responses, SSML, repromts, slots, sessions and more
+* Dev mode which simplifies skill testing while development
 
 ## Example
 
@@ -65,6 +66,12 @@ fun main(args: Array<String>) {
     Aleksa.start(args)
 }
 ```
+
+Run it with `--interface 127.0.0.1 --port 8080 --dev`. Now you can test the
+skill with curl or some other tool at the url `http://127.0.0.1:8080/helloworld`.
+
+If you don't specify any commandline arguments, it binds to all interfaces on port 8080 and without dev mode. 
+The dev mode disables request signature checking, timestamp checking and application id verification.
 
 For more examples see the [examples](examples) directory.
 
