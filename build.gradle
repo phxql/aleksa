@@ -4,21 +4,25 @@ version '1.0-SNAPSHOT'
 description 'Aleksa is a small framework for writing Alexa Skills in Kotlin'
 
 buildscript {
-    ext.kotlin_version = '1.0.5-2'
+    ext.kotlin_version = '1.0.6'
     ext.jetty_version = '9.4.0.v20161208'
+    ext.dokka_version = '0.9.13'
 
     repositories {
         mavenCentral()
+        jcenter()
     }
 
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
 }
 
 apply plugin: 'kotlin'
 apply plugin: 'signing'
 apply plugin: 'maven'
+apply plugin: 'org.jetbrains.dokka'
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -55,6 +59,33 @@ uploadArchives {
             enhancePom(pom)
         }
     }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.kotlin
+}
+
+task javadocJar(type: Jar, dependsOn: 'dokkaJavadoc') {
+    classifier = 'javadoc'
+    from "$buildDir/javadoc"
+}
+
+task dokkaJar(type: Jar, dependsOn: 'dokka') {
+    classifier = 'dokka'
+    from "$buildDir/dokka"
+}
+
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+    archives dokkaJar
+}
+
+task dokkaJavadoc(type: org.jetbrains.dokka.gradle.DokkaTask) {
+    outputFormat = 'javadoc'
+    outputDirectory = "$buildDir/javadoc"
 }
 
 /**
