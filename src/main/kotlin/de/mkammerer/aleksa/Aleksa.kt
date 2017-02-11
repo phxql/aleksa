@@ -37,11 +37,10 @@ object Aleksa {
     private val options = Options()
 
     init {
-        val options = Options()
         options.addOption("i", "interface", true, "Interface to bind to")
         options.addOption("p", "port", true, "Port to bind to")
         options.addOption("d", "dev", false, "Enable development mode")
-        options.addOption("help", "help", false, "Prints help")
+        options.addOption("h", "help", false, "Prints help")
     }
 
     /**
