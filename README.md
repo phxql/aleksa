@@ -68,6 +68,10 @@ fun main(args: Array<String>) {
 
 For more examples see the [examples](examples) directory.
 
+## Documentation
+
+* [Functions](docs/functions.md)
+
 ## License
 
 [LGPLv3](LICENSE)
