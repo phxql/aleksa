@@ -1,6 +1,8 @@
 group 'de.mkammerer.aleksa'
 version '1.0-SNAPSHOT'
 
+description 'Aleksa is a small framework for writing Alexa Skills in Kotlin'
+
 buildscript {
     ext.kotlin_version = '1.0.5-2'
     ext.jetty_version = '9.4.0.v20161208'
@@ -15,6 +17,8 @@ buildscript {
 }
 
 apply plugin: 'kotlin'
+apply plugin: 'signing'
+apply plugin: 'maven'
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
@@ -30,6 +34,57 @@ dependencies {
 
 repositories {
     mavenCentral()
+}
+
+signing {
+    sign configurations.archives
+    required { gradle.taskGraph.hasTask("uploadArchives") }
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
+                authentication(userName: System.getenv('SONATYPE_USER'), password: System.getenv('SONATYPE_PASSWORD'))
+            }
+            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots') {
+                authentication(userName: System.getenv('SONATYPE_USER'), password: System.getenv('SONATYPE_PASSWORD'))
+            }
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            enhancePom(pom)
+        }
+    }
+}
+
+/**
+ * Adds license, developer and SCM tags to the POM file.
+ * @param pom POM.
+ */
+void enhancePom(MavenPom pom) {
+    pom.project {
+        url 'https://github.com/phxql/aleksa'
+        name rootProject.name
+        description project.description
+        licenses {
+            license {
+                name 'GNU Lesser General Public License, Version 3'
+                url 'https://www.gnu.org/licenses/lgpl-3.0.en.html'
+            }
+        }
+        developers {
+            developer {
+                name 'Moritz Kammerer'
+                email 'kammerer.moritz@gmail.com'
+                url 'https://www.mkammerer.de/'
+            }
+        }
+        scm {
+            connection 'scm:git:git://github.com/phxql/aleksa.git'
+            developerConnection 'scm:git:git://github.com/phxql/aleksa.git'
+            url 'https://github.com/phxql/aleksa'
+        }
+    }
 }
 
 task wrapper(type: Wrapper) {
