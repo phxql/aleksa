@@ -77,6 +77,10 @@ For more examples see the [examples](examples) directory.
 
 [LGPLv3](LICENSE)
 
+## Contributing
+
+See [contributing guidelines](docs/contributing.md).
+
 ## Maintainer
 
 Moritz Kammerer ([phXql](https://github.com/phxql))
