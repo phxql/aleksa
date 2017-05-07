@@ -6,11 +6,13 @@ import com.amazon.speech.speechlet.servlet.SpeechletServlet
 import org.apache.commons.cli.DefaultParser
 import org.apache.commons.cli.HelpFormatter
 import org.apache.commons.cli.Options
-import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.http.HttpVersion
+import org.eclipse.jetty.server.*
 import org.eclipse.jetty.servlet.ServletHandler
 import org.eclipse.jetty.servlet.ServletHolder
+import org.eclipse.jetty.util.resource.Resource
+import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.slf4j.LoggerFactory
-import java.net.InetSocketAddress
 
 /**
  * Aleksa.
@@ -40,6 +42,10 @@ object Aleksa {
         options.addOption("i", "interface", true, "Interface to bind to")
         options.addOption("p", "port", true, "Port to bind to")
         options.addOption("d", "dev", false, "Enable development mode")
+        options.addOption("ks", "keystore", true, "Location to the keystore")
+        options.addOption("kspw", "keystore-password", true, "Keystore password")
+        options.addOption("kpw", "key-password", true, "Key password. If not set, the keystore password will be used")
+        options.addOption("ka", "key-alias", true, "Key alias. If not set, a key will be automatically selected")
         options.addOption("h", "help", false, "Prints help")
     }
 
@@ -55,10 +61,18 @@ object Aleksa {
         val dev = cli.hasOption("dev")
         val help = cli.hasOption("help")
 
+        val keystore = cli.getOptionValue("keystore")
+        val tlsConfig = if (keystore == null) null else {
+            val keystorePassword = cli.getOptionValue("keystore-password")
+            val keyPassword = cli.getOptionValue("key-password") ?: keystorePassword
+            val keyAlias = cli.getOptionValue("key-alias")
+            TlsConfig(keystore, keystorePassword, keyPassword, keyAlias)
+        }
+
         if (help) {
             printHelp()
         } else {
-            start(theInterface, port, dev)
+            start(theInterface, port, dev, tlsConfig)
         }
     }
 
@@ -67,10 +81,10 @@ object Aleksa {
      *
      * [theInterface] sets the network interface to bind to (use 0.0.0.0 for all interfaces), [port] sets the
      * port to bind to. Enabling [dev] mode will disable request signature checking, timestamp checking and
-     * application id verification.
+     * application id verification. [tlsConfig] configures TLS. If set to null, no TLS will be used.
      */
-    fun start(theInterface: String = DEFAULT_INTERFACE, port: Int = DEFAULT_PORT, dev: Boolean = DEFAULT_DEV) {
-        run(theInterface, port, dev)
+    fun start(theInterface: String = DEFAULT_INTERFACE, port: Int = DEFAULT_PORT, dev: Boolean = DEFAULT_DEV, tlsConfig: TlsConfig? = null) {
+        run(theInterface, port, dev, tlsConfig)
     }
 
     /**
@@ -93,6 +107,8 @@ object Aleksa {
     fun stop() {
         val server = this.server ?: return
         server.stop()
+        speechletRegistrations.clear()
+        this.server = null
         logger.info("Stopped")
     }
 
@@ -104,14 +120,22 @@ object Aleksa {
         formatter.printHelp("aleksa", options)
     }
 
-    private fun run(theInterface: String, port: Int, dev: Boolean) {
+    private fun run(theInterface: String, port: Int, dev: Boolean, tlsConfig: TlsConfig? = null) {
         if (speechletRegistrations.isEmpty()) throw IllegalStateException("No speechlets registered. Use the addSpeechlet method to register at least one speechlet")
         if (server != null) throw IllegalStateException("Already running")
 
         setProperties(dev)
 
-        val address = InetSocketAddress(theInterface, port)
-        val server = Server(address)
+        val server = Server()
+
+        val connector = if (tlsConfig == null) {
+            ServerConnector(server)
+        } else {
+            configureTls(tlsConfig, server)
+        }
+        connector.host = theInterface
+        connector.port = port
+        server.connectors = arrayOf(connector)
 
         val servletHandler = ServletHandler()
         for (speechletRegistration in speechletRegistrations) {
@@ -135,6 +159,18 @@ object Aleksa {
         server.start()
         this.server = server
         logger.info("Running on {}:{}", theInterface, port)
+    }
+
+    private fun configureTls(tlsConfig: TlsConfig, server: Server): ServerConnector {
+        val httpConfiguration = HttpConfiguration()
+        httpConfiguration.addCustomizer(SecureRequestCustomizer())
+        val sslContextFactory = SslContextFactory()
+        sslContextFactory.keyStoreResource = Resource.newResource(tlsConfig.keystore)
+        sslContextFactory.setKeyStorePassword(tlsConfig.keystorePassword)
+        sslContextFactory.setKeyManagerPassword(tlsConfig.keyPassword)
+        sslContextFactory.certAlias = tlsConfig.alias
+
+        return ServerConnector(server, SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()), HttpConnectionFactory(httpConfiguration))
     }
 
     /**

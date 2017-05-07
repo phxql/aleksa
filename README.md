@@ -26,6 +26,7 @@ compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.0'
 * Supports hosting multiple skills in one application
 * Convenience functions for plaintext responses, SSML, repromts, slots, sessions and more
 * Dev mode which simplifies skill testing while development
+* TLS
 
 ## Example
 
