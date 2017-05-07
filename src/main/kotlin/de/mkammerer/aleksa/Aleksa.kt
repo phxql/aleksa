@@ -63,7 +63,7 @@ object Aleksa {
 
         val keystore = cli.getOptionValue("keystore")
         val tlsConfig = if (keystore == null) null else {
-            val keystorePassword = cli.getOptionValue("keystore-password")
+            val keystorePassword = cli.getOptionValue("keystore-password") ?: ""
             val keyPassword = cli.getOptionValue("key-password") ?: keystorePassword
             val keyAlias = cli.getOptionValue("key-alias")
             TlsConfig(keystore, keystorePassword, keyPassword, keyAlias)
