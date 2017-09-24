@@ -13,4 +13,4 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [1.0] - 2017-02-11
 
 ### Added
-- Initial version.
+- Initial version
