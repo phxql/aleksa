@@ -9,14 +9,14 @@ Aleksa is a small framework for writing [Alexa Skills](https://developer.amazon.
 <dependency>
     <groupId>de.mkammerer.aleksa</groupId>
     <artifactId>aleksa</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```
-compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.0'
+compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.1'
 ```
 
 ## Features
