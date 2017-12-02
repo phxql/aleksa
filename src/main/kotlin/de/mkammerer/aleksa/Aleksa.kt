@@ -194,3 +194,7 @@ object Aleksa {
 
     private data class SpeechletRegistration(val path: String, val applicationId: String, val speechlet: SpeechletV2)
 }
+
+fun main(args: Array<String>) {
+    Aleksa.start(args)
+}
