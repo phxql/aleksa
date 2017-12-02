@@ -1,5 +1,11 @@
+# IntelliJ
 .idea/
-build/
+out
 classes/
-gradle.properties
+
+# Gradle
+build/
 .gradle/
+
+# User settings
+gradle.properties
