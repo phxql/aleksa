@@ -12,6 +12,7 @@ buildscript {
     ext.slf4j_version = '1.7.25'
     ext.junit_version = '4.12'
     ext.logback_version = '1.2.3'
+    ext.metrics_version = '3.2.5'
 
     repositories {
         mavenCentral()
@@ -39,6 +40,9 @@ dependencies {
     }
     compile group: 'commons-cli', name: 'commons-cli', version: commons_cli_version
     compile group: 'org.slf4j', name: 'slf4j-api', version: slf4j_version
+    compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: metrics_version
+    compile group: 'io.dropwizard.metrics', name: 'metrics-servlets', version: metrics_version
+
     testCompile group: 'junit', name: 'junit', version: junit_version
     testCompile group: 'ch.qos.logback', name: 'logback-classic', version: logback_version
 }
