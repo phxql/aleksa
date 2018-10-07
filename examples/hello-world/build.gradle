@@ -3,7 +3,7 @@ version '1.1'
 
 // Enable Kotlin compilation
 buildscript {
-    ext.kotlin_version = '1.1.50'
+    ext.kotlin_version = '1.2.71'
     repositories {
         mavenCentral()
     }
@@ -24,14 +24,10 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     // Add Aleksa and a logging backend (logging is done with SLF4J API)
-    compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.1'
+    compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.2'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 }
 
 repositories {
     mavenCentral()
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.2'
 }
