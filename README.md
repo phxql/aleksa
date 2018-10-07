@@ -9,14 +9,14 @@ Aleksa is a small framework for writing [Alexa Skills](https://developer.amazon.
 <dependency>
     <groupId>de.mkammerer.aleksa</groupId>
     <artifactId>aleksa</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```
-compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.1'
+compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.2'
 ```
 
 ## Features
@@ -27,6 +27,7 @@ compile group: 'de.mkammerer.aleksa', name: 'aleksa', version: '1.1'
 * Convenience functions for plaintext responses, SSML, repromts, slots, sessions and more
 * Dev mode which simplifies skill testing while development
 * TLS
+* Metrics
 
 ## Example
 
@@ -72,9 +73,28 @@ Run it with `--interface 127.0.0.1 --port 8080 --dev`. Now you can test the
 skill with curl or some other tool at the url `http://127.0.0.1:8080/helloworld`.
 
 If you don't specify any commandline arguments, it binds to all interfaces on port 8080 and without dev mode. 
-The dev mode disables request signature checking, timestamp checking and application id verification.
+The dev mode disables request signature checking, timestamp checking and application id verification. It also shows some
+information on `/` to ease debugging infrastructure problems (reverse proxies, etc.).
+
+If you want metrics (statistics on how often your skills are executed), add `--metrics` and check the `/metrics` endpoint. 
 
 For more examples see the [examples](examples) directory.
+
+## Commandline parameters
+
+```
+ -d,--dev                          Enable development mode
+ -h,--help                         Prints help
+ -i,--interface <arg>              Interface to bind to
+ -ka,--key-alias <arg>             Key alias. If not set, a key will be
+                                   automatically selected
+ -kpw,--key-password <arg>         Key password. If not set, the keystore
+                                   password will be used
+ -ks,--keystore <arg>              Location to the keystore
+ -kspw,--keystore-password <arg>   Keystore password
+ -m,--metrics                      Enable metrics
+ -p,--port <arg>                   Port to bind to
+```
 
 ## Documentation
 

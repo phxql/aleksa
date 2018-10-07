@@ -16,8 +16,12 @@ class AleksaTest {
                 "alias-2"
         )
 
+        val featureConfig = FeatureConfig(
+                metrics = true
+        )
+
         Aleksa.addSpeechlet("/dummy", "12345", DummySpeechlet)
-        Aleksa.start("localhost", 9999, true, tlsConfig)
+        Aleksa.start("localhost", 9999, true, tlsConfig, featureConfig)
         Aleksa.stop()
     }
 
@@ -28,6 +32,7 @@ class AleksaTest {
                 "--interface", "localhost",
                 "--port", "9999",
                 "--dev",
+                "--metrics",
                 "--keystore", Resource.newClassPathResource("/tls.jks").toString(),
                 "--keystore-password", "keystore-pw",
                 "--key-password", "key-pw",
@@ -35,14 +40,20 @@ class AleksaTest {
         ))
         Aleksa.stop()
     }
+}
 
-    private object DummySpeechlet : SpeechletV2Base() {
-        override fun onIntent(requestEnvelope: SpeechletRequestEnvelope<IntentRequest>): SpeechletResponse {
-            return tell("Dummy")
-        }
-
-        override fun onLaunch(requestEnvelope: SpeechletRequestEnvelope<LaunchRequest>): SpeechletResponse {
-            return ask("Dummy")
-        }
+private object DummySpeechlet : SpeechletV2Base() {
+    override fun onIntent(requestEnvelope: SpeechletRequestEnvelope<IntentRequest>): SpeechletResponse {
+        return tell("Dummy")
     }
+
+    override fun onLaunch(requestEnvelope: SpeechletRequestEnvelope<LaunchRequest>): SpeechletResponse {
+        return ask("Dummy")
+    }
+}
+
+fun main(args: Array<String>) {
+    Aleksa.addSpeechlet("/dummy", "12345", DummySpeechlet)
+    Aleksa.start(args)
+    Aleksa.join()
 }

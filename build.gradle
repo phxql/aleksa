@@ -1,12 +1,18 @@
 group 'de.mkammerer.aleksa'
-version '1.1'
+version '1.2'
 
 description 'Aleksa is a small framework for writing Alexa Skills in Kotlin'
 
 buildscript {
-    ext.kotlin_version = '1.1.50'
-    ext.jetty_version = '9.4.6.v20170531'
-    ext.dokka_version = '0.9.15'
+    ext.kotlin_version = '1.2.71'
+    ext.jetty_version = '9.4.12.v20180830'
+    ext.dokka_version = '0.9.16'
+    ext.alexa_kit_version = '1.8.1'
+    ext.commons_cli_version = '1.4'
+    ext.slf4j_version = '1.7.25'
+    ext.junit_version = '4.12'
+    ext.logback_version = '1.2.3'
+    ext.metrics_version = '4.0.3'
 
     repositories {
         mavenCentral()
@@ -25,17 +31,20 @@ apply plugin: 'maven'
 apply plugin: 'org.jetbrains.dokka'
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
     compile group: 'org.eclipse.jetty', name: 'jetty-server', version: jetty_version
     compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: jetty_version
-    compile("com.amazon.alexa:alexa-skills-kit:1.3.0") {
+    compile(group: 'com.amazon.alexa', name: 'alexa-skills-kit', version: alexa_kit_version) {
         exclude module: 'log4j'
         exclude module: 'slf4j-log4j12'
     }
-    compile group: 'commons-cli', name: 'commons-cli', version: '1.3.1'
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.22'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    compile group: 'commons-cli', name: 'commons-cli', version: commons_cli_version
+    compile group: 'org.slf4j', name: 'slf4j-api', version: slf4j_version
+    compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: metrics_version
+    compile group: 'io.dropwizard.metrics', name: 'metrics-servlets', version: metrics_version
+
+    testCompile group: 'junit', name: 'junit', version: junit_version
+    testCompile group: 'ch.qos.logback', name: 'logback-classic', version: logback_version
 }
 
 repositories {
@@ -51,10 +60,10 @@ uploadArchives {
     repositories {
         mavenDeployer {
             repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-                authentication(userName: System.getenv('SONATYPE_USER'), password: System.getenv('SONATYPE_PASSWORD'))
+                authentication(userName: project.properties['sonatype.username'], password: project.properties['sonatype.password'])
             }
             snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots') {
-                authentication(userName: System.getenv('SONATYPE_USER'), password: System.getenv('SONATYPE_PASSWORD'))
+                authentication(userName: project.properties['sonatype.username'], password: project.properties['sonatype.password'])
             }
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
@@ -118,8 +127,4 @@ void enhancePom(MavenPom pom) {
             url 'https://github.com/phxql/aleksa'
         }
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.2'
 }

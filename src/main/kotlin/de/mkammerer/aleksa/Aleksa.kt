@@ -3,6 +3,9 @@ package de.mkammerer.aleksa
 import com.amazon.speech.Sdk
 import com.amazon.speech.speechlet.SpeechletV2
 import com.amazon.speech.speechlet.servlet.SpeechletServlet
+import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.servlets.MetricsServlet
+import de.mkammerer.aleksa.metrics.MetricsSpeechletV2
 import org.apache.commons.cli.DefaultParser
 import org.apache.commons.cli.HelpFormatter
 import org.apache.commons.cli.Options
@@ -20,21 +23,30 @@ import org.slf4j.LoggerFactory
 object Aleksa {
     private val logger = LoggerFactory.getLogger(Aleksa::class.java)
 
+    private val metricRegistry = MetricRegistry()
     private var server: Server? = null
     private val speechletRegistrations = mutableListOf<SpeechletRegistration>()
 
     /**
      * Default interface to bind to.
      */
-    const val DEFAULT_INTERFACE = "0.0.0.0"
+    private const val DEFAULT_INTERFACE = "0.0.0.0"
     /**
      * Default port to bind to.
      */
-    const val DEFAULT_PORT = 8080
+    private const val DEFAULT_PORT = 8080
     /**
      * Default value of dev mode.
      */
-    const val DEFAULT_DEV = false
+    private const val DEFAULT_DEV = false
+    /**
+     * Root path.
+     */
+    private const val ROOT_PATH = "/"
+    /**
+     * Metrics path.
+     */
+    private const val METRICS_PATH = "/metrics"
 
     private val options = Options()
 
@@ -46,6 +58,8 @@ object Aleksa {
         options.addOption("kspw", "keystore-password", true, "Keystore password")
         options.addOption("kpw", "key-password", true, "Key password. If not set, the keystore password will be used")
         options.addOption("ka", "key-alias", true, "Key alias. If not set, a key will be automatically selected")
+        options.addOption("m", "metrics", false, "Enable metrics")
+
         options.addOption("h", "help", false, "Prints help")
     }
 
@@ -68,11 +82,14 @@ object Aleksa {
             val keyAlias = cli.getOptionValue("key-alias")
             TlsConfig(keystore, keystorePassword, keyPassword, keyAlias)
         }
+        val featureConfig = FeatureConfig(
+                metrics = cli.hasOption("metrics")
+        )
 
         if (help) {
             printHelp()
         } else {
-            start(theInterface, port, dev, tlsConfig)
+            start(theInterface, port, dev, tlsConfig, featureConfig)
         }
     }
 
@@ -82,9 +99,10 @@ object Aleksa {
      * [theInterface] sets the network interface to bind to (use 0.0.0.0 for all interfaces), [port] sets the
      * port to bind to. Enabling [dev] mode will disable request signature checking, timestamp checking and
      * application id verification. [tlsConfig] configures TLS. If set to null, no TLS will be used.
+     * [featureConfig] enables additional features.
      */
-    fun start(theInterface: String = DEFAULT_INTERFACE, port: Int = DEFAULT_PORT, dev: Boolean = DEFAULT_DEV, tlsConfig: TlsConfig? = null) {
-        run(theInterface, port, dev, tlsConfig)
+    fun start(theInterface: String = DEFAULT_INTERFACE, port: Int = DEFAULT_PORT, dev: Boolean = DEFAULT_DEV, tlsConfig: TlsConfig? = null, featureConfig: FeatureConfig? = null) {
+        run(theInterface, port, dev, tlsConfig, featureConfig)
     }
 
     /**
@@ -120,7 +138,7 @@ object Aleksa {
         formatter.printHelp("aleksa", options)
     }
 
-    private fun run(theInterface: String, port: Int, dev: Boolean, tlsConfig: TlsConfig? = null) {
+    private fun run(theInterface: String, port: Int, dev: Boolean, tlsConfig: TlsConfig? = null, featureConfig: FeatureConfig?) {
         if (speechletRegistrations.isEmpty()) throw IllegalStateException("No speechlets registered. Use the addSpeechlet method to register at least one speechlet")
         if (server != null) throw IllegalStateException("Already running")
 
@@ -138,27 +156,61 @@ object Aleksa {
         server.connectors = arrayOf(connector)
 
         val servletHandler = ServletHandler()
+
+        installSpeechlets(featureConfig, servletHandler)
+        enableDevMode(dev, servletHandler)
+        enableMetrics(featureConfig, servletHandler)
+
+        server.handler = servletHandler
+        server.start()
+        this.server = server
+
+        logger.info("Running on {}:{}", theInterface, port)
+
+    }
+
+    private fun installSpeechlets(featureConfig: FeatureConfig?, servletHandler: ServletHandler) {
         for (speechletRegistration in speechletRegistrations) {
             logger.info("Registering {} on {}", speechletRegistration.speechlet, speechletRegistration.path)
             val speechletServlet = SpeechletServlet()
-            speechletServlet.setSpeechlet(speechletRegistration.speechlet)
+
+            val speechlet = addMetricsToSpeechlet(speechletRegistration.speechlet, featureConfig)
+            speechletServlet.setSpeechlet(speechlet)
             servletHandler.addServletWithMapping(ServletHolder(speechletServlet), speechletRegistration.path)
         }
+    }
 
-        if (dev) {
-            val hasRoot = speechletRegistrations.any { it.path == "/" }
-            if (!hasRoot) {
-                logger.debug("Installing root servlet")
-                servletHandler.addServletWithMapping(ServletHolder(RootServlet), "/")
+    private fun enableMetrics(featureConfig: FeatureConfig?, servletHandler: ServletHandler) {
+        if (areMetricsEnabled(featureConfig)) {
+            val hasOverriddenMetrics = speechletRegistrations.any { it.path == METRICS_PATH }
+            if (hasOverriddenMetrics) {
+                logger.warn("Can't add metrics, because a speechlet is running on $METRICS_PATH")
+            } else {
+                servletHandler.addServletWithMapping(ServletHolder(MetricsServlet(metricRegistry)), METRICS_PATH)
+                logger.info("Metrics available on $METRICS_PATH")
             }
         }
+    }
 
-        server.handler = servletHandler
+    private fun enableDevMode(dev: Boolean, servletHandler: ServletHandler) {
+        if (dev) {
+            val hasRoot = speechletRegistrations.any { it.path == ROOT_PATH }
+            if (!hasRoot) {
+                logger.debug("Installing root servlet on $ROOT_PATH")
+                servletHandler.addServletWithMapping(ServletHolder(RootServlet), ROOT_PATH)
+            }
 
-        if (dev) logger.info("DEV mode active")
-        server.start()
-        this.server = server
-        logger.info("Running on {}:{}", theInterface, port)
+            logger.info("DEV mode active")
+        }
+    }
+
+    private fun areMetricsEnabled(featureConfig: FeatureConfig?) = featureConfig?.metrics == true
+
+    /**
+     * Add metrics to the given [speechlet], if enabled in the [featureConfig].
+     */
+    private fun addMetricsToSpeechlet(speechlet: SpeechletV2, featureConfig: FeatureConfig?): SpeechletV2 {
+        return if (areMetricsEnabled(featureConfig)) MetricsSpeechletV2(speechlet, metricRegistry) else speechlet
     }
 
     private fun configureTls(tlsConfig: TlsConfig, server: Server): ServerConnector {
