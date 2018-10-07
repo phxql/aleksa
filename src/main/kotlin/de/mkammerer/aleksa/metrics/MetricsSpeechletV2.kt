@@ -17,29 +17,29 @@ class MetricsSpeechletV2(
     private val launches = metricRegistry.timer("launches")
 
     override fun onSessionStarted(requestEnvelope: SpeechletRequestEnvelope<SessionStartedRequest>) {
-        sessionsStarted.time().use {
+        sessionsStarted.time {
             delegate.onSessionStarted(requestEnvelope)
         }
     }
 
     override fun onSessionEnded(requestEnvelope: SpeechletRequestEnvelope<SessionEndedRequest>) {
-        sessionsEnded.time().use {
+        sessionsEnded.time {
             delegate.onSessionEnded(requestEnvelope)
         }
     }
 
     override fun onIntent(requestEnvelope: SpeechletRequestEnvelope<IntentRequest>): SpeechletResponse {
-        totalIntentsHandled.time().use {
+        return totalIntentsHandled.timeSupplier {
             val intent = requestEnvelope.request.intent.name
-            metricRegistry.timer("intent-handled:$intent").time().use {
-                return delegate.onIntent(requestEnvelope)
+            metricRegistry.timer("intent-handled:$intent").timeSupplier {
+                delegate.onIntent(requestEnvelope)
             }
         }
     }
 
     override fun onLaunch(requestEnvelope: SpeechletRequestEnvelope<LaunchRequest>): SpeechletResponse {
-        launches.time().use {
-            return delegate.onLaunch(requestEnvelope)
+        return launches.timeSupplier {
+            delegate.onLaunch(requestEnvelope)
         }
     }
 }

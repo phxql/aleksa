@@ -4,15 +4,15 @@ version '1.2-SNAPSHOT'
 description 'Aleksa is a small framework for writing Alexa Skills in Kotlin'
 
 buildscript {
-    ext.kotlin_version = '1.2.0'
-    ext.jetty_version = '9.4.8.v20171121'
-    ext.dokka_version = '0.9.15'
-    ext.alexa_kit_version = '1.8.0'
+    ext.kotlin_version = '1.2.71'
+    ext.jetty_version = '9.4.12.v20180830'
+    ext.dokka_version = '0.9.16'
+    ext.alexa_kit_version = '1.8.1'
     ext.commons_cli_version = '1.4'
     ext.slf4j_version = '1.7.25'
     ext.junit_version = '4.12'
     ext.logback_version = '1.2.3'
-    ext.metrics_version = '3.2.5'
+    ext.metrics_version = '4.0.3'
 
     repositories {
         mavenCentral()
@@ -127,8 +127,4 @@ void enhancePom(MavenPom pom) {
             url 'https://github.com/phxql/aleksa'
         }
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.3.1'
 }
