@@ -20,6 +20,7 @@ buildscript {
 
 plugins {
     id "org.jetbrains.kotlin.jvm" version "1.3.10"
+    id 'java-library'
 }
 
 group 'de.mkammerer.aleksa'
@@ -33,20 +34,20 @@ apply plugin: 'maven'
 apply plugin: 'org.jetbrains.dokka'
 
 dependencies {
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
-    compile group: 'org.eclipse.jetty', name: 'jetty-server', version: jetty_version
-    compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: jetty_version
-    compile(group: 'com.amazon.alexa', name: 'alexa-skills-kit', version: alexa_kit_version) {
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
+    implementation group: 'org.eclipse.jetty', name: 'jetty-server', version: jetty_version
+    implementation group: 'org.eclipse.jetty', name: 'jetty-servlet', version: jetty_version
+    api(group: 'com.amazon.alexa', name: 'alexa-skills-kit', version: alexa_kit_version) {
         exclude module: 'log4j'
         exclude module: 'slf4j-log4j12'
     }
-    compile group: 'commons-cli', name: 'commons-cli', version: commons_cli_version
-    compile group: 'org.slf4j', name: 'slf4j-api', version: slf4j_version
-    compile group: 'io.micrometer', name: 'micrometer-core', version: micrometer_version
-    compile group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: micrometer_version
+    implementation group: 'commons-cli', name: 'commons-cli', version: commons_cli_version
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: slf4j_version
+    implementation group: 'io.micrometer', name: 'micrometer-core', version: micrometer_version
+    implementation group: 'io.micrometer', name: 'micrometer-registry-prometheus', version: micrometer_version
 
-    testCompile group: 'junit', name: 'junit', version: junit_version
-    testCompile group: 'ch.qos.logback', name: 'logback-classic', version: logback_version
+    testImplementation group: 'junit', name: 'junit', version: junit_version
+    testRuntimeOnly group: 'ch.qos.logback', name: 'logback-classic', version: logback_version
 }
 
 compileKotlin {
