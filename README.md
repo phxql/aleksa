@@ -86,12 +86,12 @@ For more examples see the [examples](examples) directory.
  -d,--dev                          Enable development mode
  -h,--help                         Prints help
  -i,--interface <arg>              Interface to bind to
- -ka,--key-alias <arg>             Key alias. If not set, a key will be
-                                   automatically selected
- -kpw,--key-password <arg>         Key password. If not set, the keystore
-                                   password will be used
- -ks,--keystore <arg>              Location to the keystore
- -kspw,--keystore-password <arg>   Keystore password
+ -ka,--key-alias <arg>             TLS Key alias. If not set, a key will
+                                   be automatically selected
+ -kpw,--key-password <arg>         TLS Key password. If not set, the
+                                   keystore password will be used
+ -ks,--keystore <arg>              Location to the TLS keystore
+ -kspw,--keystore-password <arg>   TLS Keystore password
  -m,--metrics                      Enable metrics
  -p,--port <arg>                   Port to bind to
 ```
