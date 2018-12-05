@@ -1,12 +1,6 @@
-group 'de.mkammerer.aleksa'
-version '1.3-SNAPSHOT'
-
-description 'Aleksa is a small framework for writing Alexa Skills in Kotlin'
-
 buildscript {
-    ext.kotlin_version = '1.2.71'
-    ext.jetty_version = '9.4.12.v20180830'
-    ext.dokka_version = '0.9.16'
+    ext.jetty_version = '9.4.14.v20181114'
+    ext.dokka_version = '0.9.17'
     ext.alexa_kit_version = '1.8.1'
     ext.commons_cli_version = '1.4'
     ext.slf4j_version = '1.7.25'
@@ -20,10 +14,18 @@ buildscript {
     }
 
     dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
     }
 }
+
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.3.10"
+}
+
+group 'de.mkammerer.aleksa'
+version '1.3-SNAPSHOT'
+
+description 'Aleksa is a small framework for writing Alexa Skills in Kotlin'
 
 apply plugin: 'kotlin'
 apply plugin: 'signing'
@@ -31,7 +33,7 @@ apply plugin: 'maven'
 apply plugin: 'org.jetbrains.dokka'
 
 dependencies {
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8'
     compile group: 'org.eclipse.jetty', name: 'jetty-server', version: jetty_version
     compile group: 'org.eclipse.jetty', name: 'jetty-servlet', version: jetty_version
     compile(group: 'com.amazon.alexa', name: 'alexa-skills-kit', version: alexa_kit_version) {

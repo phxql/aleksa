@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 ### Changed
 - Switched from Metrics to Micrometer. Now exports metrics in Prometheus format on /metrics/prometheus
+### Updated
+- Update Kotlin, Jetty, Dokka and Gradle
 
 ## [1.2] - 2018-10-07
 ### Added
