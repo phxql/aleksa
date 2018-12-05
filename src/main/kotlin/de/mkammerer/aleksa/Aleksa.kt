@@ -3,9 +3,15 @@ package de.mkammerer.aleksa
 import com.amazon.speech.Sdk
 import com.amazon.speech.speechlet.SpeechletV2
 import com.amazon.speech.speechlet.servlet.SpeechletServlet
-import com.codahale.metrics.MetricRegistry
-import com.codahale.metrics.servlets.MetricsServlet
 import de.mkammerer.aleksa.metrics.MetricsSpeechletV2
+import de.mkammerer.aleksa.metrics.MicrometerPrometheusServlet
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics
+import io.micrometer.prometheus.PrometheusConfig
+import io.micrometer.prometheus.PrometheusMeterRegistry
 import org.apache.commons.cli.DefaultParser
 import org.apache.commons.cli.HelpFormatter
 import org.apache.commons.cli.Options
@@ -23,7 +29,7 @@ import org.slf4j.LoggerFactory
 object Aleksa {
     private val logger = LoggerFactory.getLogger(Aleksa::class.java)
 
-    private val metricRegistry = MetricRegistry()
+    private val meterRegistry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
     private var server: Server? = null
     private val speechletRegistrations = mutableListOf<SpeechletRegistration>()
 
@@ -46,7 +52,7 @@ object Aleksa {
     /**
      * Metrics path.
      */
-    private const val METRICS_PATH = "/metrics"
+    private const val METRICS_PATH = "/metrics/prometheus"
 
     private val options = Options()
 
@@ -54,10 +60,10 @@ object Aleksa {
         options.addOption("i", "interface", true, "Interface to bind to")
         options.addOption("p", "port", true, "Port to bind to")
         options.addOption("d", "dev", false, "Enable development mode")
-        options.addOption("ks", "keystore", true, "Location to the keystore")
-        options.addOption("kspw", "keystore-password", true, "Keystore password")
-        options.addOption("kpw", "key-password", true, "Key password. If not set, the keystore password will be used")
-        options.addOption("ka", "key-alias", true, "Key alias. If not set, a key will be automatically selected")
+        options.addOption("ks", "keystore", true, "Location to the TLS keystore")
+        options.addOption("kspw", "keystore-password", true, "TLS Keystore password")
+        options.addOption("kpw", "key-password", true, "TLS Key password. If not set, the keystore password will be used")
+        options.addOption("ka", "key-alias", true, "TLS Key alias. If not set, a key will be automatically selected")
         options.addOption("m", "metrics", false, "Enable metrics")
 
         options.addOption("h", "help", false, "Prints help")
@@ -174,7 +180,7 @@ object Aleksa {
             logger.info("Registering {} on {}", speechletRegistration.speechlet, speechletRegistration.path)
             val speechletServlet = SpeechletServlet()
 
-            val speechlet = addMetricsToSpeechlet(speechletRegistration.speechlet, featureConfig)
+            val speechlet = addMetricsToSpeechlet(speechletRegistration, featureConfig)
             speechletServlet.setSpeechlet(speechlet)
             servletHandler.addServletWithMapping(ServletHolder(speechletServlet), speechletRegistration.path)
         }
@@ -182,11 +188,18 @@ object Aleksa {
 
     private fun enableMetrics(featureConfig: FeatureConfig?, servletHandler: ServletHandler) {
         if (areMetricsEnabled(featureConfig)) {
+            // Install common metrics
+            ClassLoaderMetrics().bindTo(meterRegistry)
+            JvmMemoryMetrics().bindTo(meterRegistry)
+            JvmGcMetrics().bindTo(meterRegistry)
+            ProcessorMetrics().bindTo(meterRegistry)
+            JvmThreadMetrics().bindTo(meterRegistry)
+
             val hasOverriddenMetrics = speechletRegistrations.any { it.path == METRICS_PATH }
             if (hasOverriddenMetrics) {
                 logger.warn("Can't add metrics, because a speechlet is running on $METRICS_PATH")
             } else {
-                servletHandler.addServletWithMapping(ServletHolder(MetricsServlet(metricRegistry)), METRICS_PATH)
+                servletHandler.addServletWithMapping(ServletHolder(MicrometerPrometheusServlet(meterRegistry)), METRICS_PATH)
                 logger.info("Metrics available on $METRICS_PATH")
             }
         }
@@ -207,10 +220,14 @@ object Aleksa {
     private fun areMetricsEnabled(featureConfig: FeatureConfig?) = featureConfig?.metrics == true
 
     /**
-     * Add metrics to the given [speechlet], if enabled in the [featureConfig].
+     * Add metrics to the speechlet in the given [speechletRegistration], if enabled in the [featureConfig].
      */
-    private fun addMetricsToSpeechlet(speechlet: SpeechletV2, featureConfig: FeatureConfig?): SpeechletV2 {
-        return if (areMetricsEnabled(featureConfig)) MetricsSpeechletV2(speechlet, metricRegistry) else speechlet
+    private fun addMetricsToSpeechlet(speechletRegistration: SpeechletRegistration, featureConfig: FeatureConfig?): SpeechletV2 {
+        return if (areMetricsEnabled(featureConfig)) {
+            MetricsSpeechletV2(speechletRegistration.path, speechletRegistration.speechlet, meterRegistry)
+        } else {
+            speechletRegistration.speechlet
+        }
     }
 
     private fun configureTls(tlsConfig: TlsConfig, server: Server): ServerConnector {

@@ -76,7 +76,7 @@ If you don't specify any commandline arguments, it binds to all interfaces on po
 The dev mode disables request signature checking, timestamp checking and application id verification. It also shows some
 information on `/` to ease debugging infrastructure problems (reverse proxies, etc.).
 
-If you want metrics (statistics on how often your skills are executed), add `--metrics` and check the `/metrics` endpoint. 
+If you want metrics (statistics on how often your skills are executed), add `--metrics` and check the `/metrics/prometheus` endpoint. 
 
 For more examples see the [examples](examples) directory.
 

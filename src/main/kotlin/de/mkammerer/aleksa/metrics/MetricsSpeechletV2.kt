@@ -2,43 +2,45 @@ package de.mkammerer.aleksa.metrics
 
 import com.amazon.speech.json.SpeechletRequestEnvelope
 import com.amazon.speech.speechlet.*
-import com.codahale.metrics.MetricRegistry
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Tag
 
 /**
  * Decorator for a [SpeechletV2] which collects metrics.
  */
 class MetricsSpeechletV2(
+        path: String,
         private val delegate: SpeechletV2,
-        private val metricRegistry: MetricRegistry
+        private val meterRegistry: MeterRegistry
 ) : SpeechletV2 {
-    private val sessionsStarted = metricRegistry.timer("sessions-started")
-    private val sessionsEnded = metricRegistry.timer("sessions-ended")
-    private val totalIntentsHandled = metricRegistry.timer("total-intents-handled")
-    private val launches = metricRegistry.timer("launches")
+    private val pathTag = Tag.of("path", path)
+    private val tags = listOf(pathTag)
+
+    private val sessionsStarted = meterRegistry.timer("aleksa.sessions.started", tags)
+    private val sessionsEnded = meterRegistry.timer("aleksa.sessions.ended", tags)
+    private val launches = meterRegistry.timer("aleksa.launches", tags)
 
     override fun onSessionStarted(requestEnvelope: SpeechletRequestEnvelope<SessionStartedRequest>) {
-        sessionsStarted.time {
+        sessionsStarted.record {
             delegate.onSessionStarted(requestEnvelope)
         }
     }
 
     override fun onSessionEnded(requestEnvelope: SpeechletRequestEnvelope<SessionEndedRequest>) {
-        sessionsEnded.time {
+        sessionsEnded.record {
             delegate.onSessionEnded(requestEnvelope)
         }
     }
 
     override fun onIntent(requestEnvelope: SpeechletRequestEnvelope<IntentRequest>): SpeechletResponse {
-        return totalIntentsHandled.timeSupplier {
-            val intent = requestEnvelope.request.intent.name
-            metricRegistry.timer("intent-handled:$intent").timeSupplier {
-                delegate.onIntent(requestEnvelope)
-            }
+        val intent = requestEnvelope.request.intent.name ?: "null"
+        return meterRegistry.timer("aleksa.intents.handled", listOf(pathTag, Tag.of("intent", intent))).recordCallable {
+            delegate.onIntent(requestEnvelope)
         }
     }
 
     override fun onLaunch(requestEnvelope: SpeechletRequestEnvelope<LaunchRequest>): SpeechletResponse {
-        return launches.timeSupplier {
+        return launches.recordCallable {
             delegate.onLaunch(requestEnvelope)
         }
     }
