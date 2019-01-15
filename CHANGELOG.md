@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
+### Added
+- Added more functions related to session management
 ### Changed
 - Switched from Metrics to Micrometer. Now exports metrics in Prometheus format on /metrics/prometheus
 ### Updated
