@@ -70,6 +70,20 @@ val value: String? = getSessionString(request, "name")
 Reads the value with the key `name` from the session. Returns null if the key
  doesn't exist or the value isn't a string.
 
+```kotlin
+// Request is the request from the speechlet
+putSessionString(request, "name", "value")
+```
+
+Stores the attribute with key `name` and the value `value` in the session.
+
+```kotlin
+// Request is the request from the speechlet
+removeSessionAttribute(request, "name")
+```
+
+Removes the attribute with the key `name` from the session.
+
 ## Miscellaneous
 
 ```kotlin

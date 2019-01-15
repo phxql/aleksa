@@ -88,6 +88,24 @@ fun getSessionString(request: SpeechletRequestEnvelope<*>, key: String): String?
 }
 
 /**
+ * Puts the given [value] in the session under the given [key].
+ *
+ * if there is already a value with this [key], the existing value will be overwritten.
+ */
+fun putSessionString(request: SpeechletRequestEnvelope<*>, key: String, value: String) {
+    request.session.setAttribute(key, value)
+}
+
+/**
+ * Removes the given [key] from the session.
+ *
+ * If the [key] doesn't exist, nothing will happen.
+ */
+fun removeSessionAttribute(request: SpeechletRequestEnvelope<*>, key: String) {
+    request.session.removeAttribute(key)
+}
+
+/**
  * Returns the SSML for a digit-spoken [telephone number][number] with reasonable pauses between them.
  *
  * Filters all non-digit characters from the given string.
