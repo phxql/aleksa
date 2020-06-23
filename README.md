@@ -1,6 +1,10 @@
 # Aleksa
 Aleksa is a small framework for writing [Alexa Skills](https://developer.amazon.com/alexa-skills-kit) in Kotlin.
 
+## Warning
+
+**This framework uses an old version of the Alexa SDK - skills built with it won't work with Alexa anymore.**
+
 ## Usage
 
 ### Maven
